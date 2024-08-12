@@ -5,6 +5,18 @@
 
 . $1
 
+<<<<<<< HEAD
+apt install python3-venv -y
+rm -rf venv
+python3 -m venv venv
+source venv/bin/activate
+pip install python-openstackclient==5.8.0
+pip install ansible==2.9.6
+pip install ansible-core==2.13.0
+pip install jinja2==3.1.2
+
+=======
+>>>>>>> 22a170dc82f00f96917180144df223b937b67f3f
 rm /root/.ssh/known_hosts $3 > /dev/null 2>&1 # Remove known_hosts to avoid SSH key mismatch
 # Generating keys.
 openstack keypair delete $3 > /dev/null 2>&1
@@ -92,19 +104,29 @@ echo "Configuring security group rules"
 openstack security group rule create $SECURITY_GROUP_NAME --protocol tcp --remote-ip 0.0.0.0/0
 openstack security group rule create $SECURITY_GROUP_NAME --protocol udp --remote-ip 0.0.0.0/0
 openstack security group rule create $SECURITY_GROUP_NAME --protocol icmp --remote-ip 0.0.0.0/0
+## Function to get flavor ID based on criteria
+get_flavor_id() {
+    local FLAVOR_NAME=$(openstack flavor list -c ID -c RAM -c Disk -c VCPUs -f csv | awk -F ',' '$2 == 2048 && $3 == 20 && $4 == 2 {print $1}' | sed 's/"//g' | head -n 1)
+    
+    if [ -z "$FLAVOR_NAME" ]; then
+        echo "No suitable flavor found."
+        exit 1
+    fi
 
-
+    echo $FLAVOR_NAME
+}
 
 ## VM creation function
 create_vm() {
     local VM_NAME=$1
     local TAG=$2
     local KEY_NAME=$3
+    local FLAVOR_NAME=$4
     
     echo "Key Name is: $KEY_NAME"
-    echo "Creating VM: $VM_NAME"
+    echo "Creating VM: $VM_NAME with flavor: $FLAVOR_NAME"
     openstack server create \
-        --flavor "2C-2GB-20GB" \
+        --flavor "$FLAVOR_NAME" \
         --image "Ubuntu 20.04 Focal Fossa x86_64" \
         --security-group $SECURITY_GROUP_NAME \
         --key-name "$KEY_NAME" \
@@ -112,14 +134,18 @@ create_vm() {
         "$VM_NAME"
 }
 
+# Get the appropriate flavor name
+FLAVOR_NAME=$(get_flavor_id)
+
 # Create 5 VMs
-create_vm "bastion_$2" "$2" "$3"
-create_vm "proxy_$2" "$2" "$3"
-create_vm "vm1_$2" "$2" "$3"
-create_vm "vm2_$2" "$2" "$3"
-create_vm "vm3_$2" "$2" "$3"
+create_vm "bastion_$2" "$2" "$3" "$FLAVOR_NAME"
+create_vm "proxy_$2" "$2" "$3" "$FLAVOR_NAME"
+create_vm "vm1_$2" "$2" "$3" "$FLAVOR_NAME"
+create_vm "vm2_$2" "$2" "$3" "$FLAVOR_NAME"
+create_vm "vm3_$2" "$2" "$3" "$FLAVOR_NAME"
 
 echo "VM creation completed"
+
 
 # Assign floating IPs to bastion and proxy
 echo "Assigning floating IP $FLOATING_IP1 to bastion_$2"

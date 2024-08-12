@@ -5,7 +5,7 @@
 
 # Source the OpenStack RC file
 . $1
-
+source venv/bin/activate
 # Function to delete resources by tag
 delete_by_tag() {
     local resource_type=$1
