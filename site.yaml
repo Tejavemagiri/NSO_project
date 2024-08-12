@@ -1,0 +1,103 @@
+- hosts: webservers
+  tasks:
+  - name: apt-update
+    become: yes
+    apt: 
+       update_cache: yes
+
+  - name: apt-install pip
+    become: yes
+    apt:
+      name: python3-pip
+
+  - name: pip install flask
+    become: yes
+    pip:
+       name: flask
+
+  - name: pip install gunicorn
+    become: yes
+    pip:
+      name: gunicorn
+
+  
+
+  - name: removing application2.py
+    file: 
+      state: absent
+      path: /home/ubuntu/app2.py
+
+  - name: Transplanting the application2.py
+    copy:
+    # become: yes
+     src: ./application2.py
+     dest: ~/app.py
+
+  - name: Transplant config 
+    copy:
+     src: ./gunicorn_config.py
+     dest: ~/gconfig.py
+
+  - name: transplant gunirun
+    copy:
+     src: ./gunirun.sh
+     dest: ~/gunirun.sh
+
+  - name: Change the working directory to somedir/ before executing the command
+    become: yes
+    ansible.builtin.shell: bash /home/ubuntu/gunirun.sh 
+    
+  
+
+  # - name: Simple gunicorn run
+  #   become: yes
+  #   community.general.gunicorn:
+  #    app: 'app'
+  #    chdir: '/home/ubuntu/'
+  #    conf: '/home/ubuntu/gconfig.py'
+
+- hosts: HAproxy
+  tasks:
+  - name: apt-update cache
+    become: yes
+    apt: 
+       update_cache: yes
+
+  - name: Install haproxy software in HAproxy node
+    become: yes
+    apt:
+      name: haproxy
+
+  - name: Template the haproxy
+    become: yes
+    template:
+     src: ./haproxy
+     dest: /etc/haproxy/haproxy.cfg
+
+  - name: Install Nginx
+    become: yes
+    apt:
+      name: nginx
+
+  - name: Template the nginx
+    become: yes
+    template:
+     src: ./nginx2.conf
+     dest: /etc/nginx/nginx.conf
+
+  - name: Service restart
+    become: yes
+    ansible.builtin.service:
+     name: nginx
+     state: restarted
+ 
+  - name: Service restart
+    become: yes
+    ansible.builtin.service:
+     name: haproxy
+     state: restarted
+
+  
+
+  
+  
