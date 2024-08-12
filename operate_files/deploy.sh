@@ -8,18 +8,8 @@
 SECURITY_GROUP_NAME="security_$2"
 NETWORK_NAME="network_$2"
 KEY_NAME="$3"
-
-# Function to get flavor ID based on criteria
-get_flavor_id() {
-    local FLAVOR_NAME=$(openstack flavor list -c ID -c RAM -c Disk -c VCPUs -f csv | awk -F ',' '$2 == 2048 && $3 == 20 && $4 == 2 {print $1}' | sed 's/"//g' | head -n 1)
-    
-    if [ -z "$FLAVOR_NAME" ]; then
-        echo "No suitable flavor found."
-        exit 1
-    fi
-
-    echo $FLAVOR_NAME
-}
+FLAVOR_NAME=$4
+timestamp=$(date +%s | tail -c3)
 
 create_vm() {
     local VM_NAME=$1
@@ -62,11 +52,6 @@ create_vm() {
     fi
 }
 
-# Get the appropriate flavor name
-FLAVOR_NAME=$(get_flavor_id)
-
-# Generate a 6-digit Unix time
-timestamp=$(date +%s | tail -c3)
 
 # VM name with 6-digit Unix time
 VM_NAME="vm${timestamp}_$2"
