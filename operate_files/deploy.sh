@@ -5,15 +5,13 @@
 # $2: tag
 # $3: ssh_key
 
-. $1
-
 SECURITY_GROUP_NAME="security_$2"
 NETWORK_NAME="network_$2"
 KEY_NAME="$3"
-VM_NAME="vm4_$2"
 
 create_vm() {
     local VM_NAME=$1
+    
     local TAG=$2
     local KEY_NAME=$3
     
@@ -51,5 +49,9 @@ create_vm() {
         echo "No IP found for the VM"
     fi
 }
+# Generate a 6-digit Unix time
+timestamp=$(date +%s | tail -c3)
 
-create_vm "vm4_$2" "$2" "$3"
+# VM name with 6-digit Unix time
+VM_NAME="vm${timestamp}_$2"
+create_vm "$VM_NAME" "$2" "$3"
