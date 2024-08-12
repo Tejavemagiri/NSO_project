@@ -35,7 +35,7 @@
 
     - name: Configure SNMPD to listen on all interfaces
       ansible.builtin.shell:
-        cmd: sed -i 's/^agentAddress  127\.0\.0\.1,\[::1\]$/agentAddress  0.0.0.0,[::1]/' /etc/snmp/snmpd.conf
+        cmd: sed -i 's/^agentaddress  127\.0\.0\.1,\[::1\]$/agentaddress  0.0.0.0,[::1]/' /etc/snmp/snmpd.conf
 
     - name: Ensure snmpd is running
       ansible.builtin.service:
@@ -51,7 +51,9 @@
   tasks:
     - name: Install NGINX
       ansible.builtin.apt:
-        name: nginx
+        update_cache: yes
+        name:
+            - nginx
         state: present
 
     - name: Configure NGINX for SNMP Load Balancing

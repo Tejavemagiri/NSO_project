@@ -1,18 +1,11 @@
-#Simple flask services/applications for various assignments.
-# 
-# main.py: Online calculator, supports only 'add'.
-# application2.py: Replies with a string containing the Time and hostname.
-# assignment2.py: Replies with an HTML formatted string containing the Time and hostname.
+./install <openrc> <tag> <ssh_key> #excluding the openrc file the other two are just name strings.
+./operate <openrc> <tag> <ssh_key> 
+./cleanup <openrc> <tag> <ssh_key>
 
-#export FLASK_APP=<filename>
-#export FLASK_RUN_HOST=<localhost|0.0.0.0>
-#export FLASK_RUN_PORT=8210
+RULES:
+Before running Operate or Cleanup, you must run install as it will create the necessary resources (venv) and generate the necessary files.
 
-
-
-Usage Example:
-export FLASK_APP=main.py
-export FLASK_RUN_HOST=localhost
-export FLASK_RUN_PORT=8210
-flask run
-
+Requirements:
+python3 # The script will install required stuff. 
+apt 
+bash 
