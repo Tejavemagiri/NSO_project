@@ -1,25 +1,58 @@
 #!/bin/bash
-
-# Usage: install <openrc> <tag> <ssh_key>
+#  Require python 3.9
+# Usage: install <openrc> <tag> <ssh_key_path>
 #                   $1      $2     $3
 
 . $1
 
-apt install python3-venv -y
-rm -rf venv
-python3 -m venv venv
-source venv/bin/activate
+# Check for required Python version
+required_version="3.8"
+if ! command -v python$required_version &> /dev/null; then
+    echo "Error: Python $required_version is not installed. Please install it and try again."
+    exit 1
+fi
+
+# Install required packages
+apt install python3-pip -y
+
+# Install specific versions of packages
 pip install python-openstackclient==5.8.0
 pip install ansible==2.9.6
 pip install ansible-core==2.13.0
 pip install jinja2==3.1.2
 
-rm /root/.ssh/known_hosts $3 > /dev/null 2>&1 # Remove known_hosts to avoid SSH key mismatch
-# Generating keys.
-openstack keypair delete $3 > /dev/null 2>&1
-openstack keypair create $3 > ./storage/$3
-cp ./storage/$3 ./operate_files/$3
+# Generate key name
+key_name="key_$2"
+
+# Check if the provided key path exists
+if [ ! -f "$3" ]; then
+    echo "Error: The provided SSH key path does not exist."
+    exit 1
+fi
+
+# Get the public key
+public_key_path="${3}.pub"
+if [ ! -f "$public_key_path" ]; then
+    echo "Error: Public key not found at ${public_key_path}"
+    exit 1
+fi
+
+rm /root/.ssh/known_hosts > /dev/null 2>&1 # Remove known_hosts to avoid SSH key mismatch
+
+# Delete existing keypair if it exists
+openstack keypair delete $key_name > /dev/null 2>&1
+
+# Create new keypair
+openstack keypair create --public-key $public_key_path $key_name
+
+# Copy the private key to the required locations
+cp $3 ./storage/$key_name
+cp $3 ./operate_files/$key_name
+
 echo "Generated keys."
+
+# Reassign $3 to the new key name for subsequent code
+
 
 echo "Checking for free floating IPs"
 FREE_FLOATING_IPS=$(openstack floating ip list --status DOWN -c "Floating IP Address" -f value)
@@ -119,27 +152,38 @@ create_vm() {
     local TAG=$2
     local KEY_NAME=$3
     local FLAVOR_NAME=$4
+    local IMAGE_ID=$5
     
     echo "Key Name is: $KEY_NAME"
     echo "Creating VM: $VM_NAME with flavor: $FLAVOR_NAME"
     openstack server create \
         --flavor "$FLAVOR_NAME" \
-        --image "Ubuntu 20.04 Focal Fossa x86_64" \
+        --image "$IMAGE_ID" \
         --security-group $SECURITY_GROUP_NAME \
         --key-name "$KEY_NAME" \
         --network $NETWORK_NAME \
+        --wait \
         "$VM_NAME"
 }
 
 # Get the appropriate flavor name
 FLAVOR_NAME=$(get_flavor_id)
+getSuitableImage() { 
+    openstack image list --format json | \
+    jq -r '.[] | select(.Name | test("(?i)ubuntu.*20")) | "\(.ID) \(.Name)"' | \
+    while read -r image_id image_name; do
+        echo $image_id
+   done
 
+}
+ echo "Searching for suitable images..."
+IMAGE_ID=$(getSuitableImage)
 # Create 5 VMs
-create_vm "bastion_$2" "$2" "$3" "$FLAVOR_NAME"
-create_vm "proxy_$2" "$2" "$3" "$FLAVOR_NAME"
-create_vm "vm1_$2" "$2" "$3" "$FLAVOR_NAME"
-create_vm "vm2_$2" "$2" "$3" "$FLAVOR_NAME"
-create_vm "vm3_$2" "$2" "$3" "$FLAVOR_NAME"
+create_vm "bastion_$2" "$2" "$key_name" "$FLAVOR_NAME" "$IMAGE_ID"
+create_vm "proxy_$2" "$2" "$key_name" "$FLAVOR_NAME" "$IMAGE_ID"
+create_vm "vm1_$2" "$2" "$key_name" "$FLAVOR_NAME" "$IMAGE_ID"
+create_vm "vm2_$2" "$2" "$key_name" "$FLAVOR_NAME" "$IMAGE_ID"
+create_vm "vm3_$2" "$2" "$key_name" "$FLAVOR_NAME" "$IMAGE_ID"
 
 echo "VM creation completed"
 
@@ -162,6 +206,6 @@ for vm in "vm1_$2" "vm2_$2" "vm3_$2"; do
     echo "$IP" >> ./storage/ips
 done
 cd install_files
-bash install_software.sh $3 $FLOATING_IP1
+bash install_software.sh $key_name $FLOATING_IP1
 
 

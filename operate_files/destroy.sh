@@ -20,7 +20,7 @@ delete_vm_by_pattern() {
     vm_ip=$(openstack server show $vm_id -c addresses -f value | grep -oP '\d+\.\d+\.\d+\.\d+')
     
     echo "Deleting VM: $vm_name (ID: $vm_id, IP: $vm_ip)"
-    openstack server delete $vm_id
+    openstack server delete $vm_id --wait
     
     if [ -n "$vm_ip" ]; then
         echo "Removing IP $vm_ip from storage/ips file"

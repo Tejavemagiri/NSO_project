@@ -1,11 +1,16 @@
 #!/bin/bash
 
-# Usage: cleanup <openrc> <tag> <ssh_key>
-#         $1      $2     $3
+# Usage: operate <openrc> <tag> <ssh_key_path>
+#                 $1      $2     $3
 
-# Source the OpenStack RC file
 . $1
-source venv/bin/activate
+
+# Generate key name
+key_name="key_$2"
+
+# Reassign $3 to the new key name
+
+# source venv/bin/activate
 # Function to delete resources by tag
 delete_by_tag() {
     local resource_type=$1
@@ -23,7 +28,7 @@ delete_vms_by_pattern() {
     echo "Deleting VMs with name pattern: $pattern"
     for vm in $(openstack server list -f value -c ID -c Name | awk -v pat="$pattern" '$2 ~ pat {print $1}'); do
         echo "Deleting VM: $vm"
-        openstack server delete $vm
+        openstack server delete $vm --wait
     done
 }
 
@@ -63,6 +68,6 @@ delete_by_tag "security group" $2
 delete_by_tag "port" $2
 
 #  Delete the SSH key
-openstack keypair delete $3
+openstack keypair delete $key_name
 
 echo "Cleanup completed"

@@ -10,12 +10,13 @@ NETWORK_NAME="network_$2"
 KEY_NAME="$3"
 FLAVOR_NAME=$4
 timestamp=$(date +%s | tail -c3)
-
+IMAGE_ID=$5
 create_vm() {
     local VM_NAME=$1
     local TAG=$2
     local KEY_NAME=$3
     local FLAVOR_NAME=$4
+    local IMAGE_ID=$5
     
     echo "Key Name is: $KEY_NAME"
     echo "Creating VM: $VM_NAME"
@@ -23,10 +24,11 @@ create_vm() {
     # Create the VM and capture its ID
     vm_id=$(openstack server create \
         --flavor "$FLAVOR_NAME" \
-        --image "Ubuntu 20.04 Focal Fossa x86_64" \
+        --image "$IMAGE_ID" \
         --security-group $SECURITY_GROUP_NAME \
         --key-name "$KEY_NAME" \
         --network $NETWORK_NAME \
+        --wait \
         "$VM_NAME" -f value -c id)
     
     echo "VM created with ID: $vm_id"
@@ -55,4 +57,4 @@ create_vm() {
 
 # VM name with 6-digit Unix time
 VM_NAME="vm${timestamp}_$2"
-create_vm "$VM_NAME" "$2" "$3" "$FLAVOR_NAME"
+create_vm "$VM_NAME" "$2" "$3" "$FLAVOR_NAME" "$IMAGE_ID"
