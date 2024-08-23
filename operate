@@ -4,7 +4,8 @@
 #                 $1      $2     $3
 
 . $1
-
+chmod +x operate_files/destroy.sh 
+chmod +x operate_files/deploy.sh
 # Generate key name
 key_name="key_$2"
 
