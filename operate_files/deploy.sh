@@ -29,7 +29,7 @@ create_vm() {
         --key-name "$KEY_NAME" \
         --network $NETWORK_NAME \
         --wait \
-        "$VM_NAME" -f value -c id)
+        "$VM_NAME" -f value -c id | tr -d '\n')
     
     echo "VM created with ID: $vm_id"
     

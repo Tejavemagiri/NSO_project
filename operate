@@ -64,7 +64,7 @@ operation() {
             ./operate_files/destroy.sh "$3" "$4" "$5" 
         done
         cd operate_files
-        bash install_software.sh "$5"
+        bash install_software.sh "../storage/$5"
         cd ..
     elif [ $difference -gt 0 ]; then
         # Positive difference: deploy VMs
@@ -73,7 +73,7 @@ operation() {
             ./operate_files/deploy.sh "$3" "$4" "$5" "$FLAVOR_NAME" "$7"
         done
         cd operate_files
-        bash install_software.sh "$5"
+        bash install_software.sh "../storage/$5"
         cd ..
     else
         echo "No change in VM count"
