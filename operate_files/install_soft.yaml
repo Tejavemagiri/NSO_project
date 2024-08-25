@@ -1,7 +1,7 @@
 ---
 - name: Deploy Python Service and SNMPD
   hosts: service_workers
-  gather_facts: false
+  gather_facts: yes
   become: true
   tasks:
     - name: Transfer service.py to remote server
@@ -49,7 +49,7 @@
 - name: Install and Configure NGINX on Proxy Servers
   hosts: proxy
   become: true
-  gather_facts: false
+  gather_facts: yes
   tasks:
     - name: Install NGINX
       ansible.builtin.apt:

@@ -49,7 +49,7 @@
 - name: Install and Configure NGINX on Proxy Servers
   hosts: proxy
   become: true
-  gather_facts: no
+  gather_facts: yes
   tasks:
     - name: Install NGINX
       ansible.builtin.apt:
