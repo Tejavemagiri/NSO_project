@@ -9,6 +9,9 @@
         src: ../storage/service.py
         dest: /home/ubuntu/service.py
         mode: '0755'
+      retries: 5
+      delay: 5
+      until: ansible.builtin.stat(path='/home/ubuntu/service.py').stat.exists
 
     - name: Update package list and install Python 3 and pip
       ansible.builtin.apt:
@@ -18,30 +21,47 @@
           - python3-pip
           - snmpd
         state: present
+      retries: 5
+      delay: 5
+      until: ansible.builtin.apt(name='python3').cache_updated
 
     - name: Transfer requirements.txt to remote server
       ansible.builtin.copy:
         src: ../storage/requirements.txt
         dest: /home/ubuntu/requirements.txt
+      retries: 5
+      delay: 5
+      until: ansible.builtin.stat(path='/home/ubuntu/requirements.txt').stat.exists
 
     - name: Install Python packages from requirements.txt
       ansible.builtin.command:
         cmd: python3 -m pip install -r /home/ubuntu/requirements.txt
+      retries: 5
+      delay: 5
+      until: ansible.builtin.command(cmd='python3 -m pip show <package-name>').rc == 0
 
     - name: Run gunicorn with service.py in daemon mode
       ansible.builtin.command:
         cmd: gunicorn -D -b 0.0.0.0:5000 service:app
-
+      retries: 5
+      delay: 5
+      until: ansible.builtin.command(cmd='pgrep gunicorn').rc == 0
 
     - name: Configure SNMPD to listen on all interfaces
       ansible.builtin.shell:
         cmd: sed -i 's/^agentaddress  127\.0\.0\.1,\[::1\]$/agentaddress  0.0.0.0,[::1]/' /etc/snmp/snmpd.conf
+      retries: 5
+      delay: 5
+      until: ansible.builtin.shell(cmd="grep 'agentaddress  0.0.0.0,\[::1\]' /etc/snmp/snmpd.conf").rc == 0
 
     - name: Ensure snmpd is running
       ansible.builtin.service:
         name: snmpd
         state: restarted
         enabled: true
+      retries: 5
+      delay: 5
+      until: ansible.builtin.service(name='snmpd').state == 'running'
 
 
 - name: Install and Configure NGINX on Proxy Servers
@@ -51,26 +71,31 @@
   tasks:
     - name: Install NGINX
       ansible.builtin.apt:
-        update_cache: yes
-        name:
-            - nginx
+        name: nginx
         state: present
+      retries: 5
+      delay: 5
+      until: ansible.builtin.apt(name='nginx').cache_updated
 
     - name: Configure NGINX for SNMP Load Balancing
       ansible.builtin.template:
         src: ../storage/nginx.conf.j2
         dest: /etc/nginx/nginx.conf
-
-    - name: Restarting NGINX
-      ansible.builtin.service:
-        name: nginx
-        state: restarted
+      retries: 5
+      delay: 5
+      until: ansible.builtin.stat(path='/etc/nginx/nginx.conf').stat.exists
 
     - name: Test NGINX Configuration
       ansible.builtin.command:
         cmd: nginx -t
+      retries: 5
+      delay: 5
+      until: ansible.builtin.command(cmd='nginx -t').rc == 0
 
     - name: Restart NGINX
       ansible.builtin.service:
         name: nginx
         state: restarted
+      retries: 5
+      delay: 5
+      until: ansible.builtin.service(name='nginx').state == 'running'
