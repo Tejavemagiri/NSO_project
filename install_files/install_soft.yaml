@@ -1,8 +1,15 @@
 ---
 - name: Deploy Python Service and SNMPD
   hosts: service_workers
-  gather_facts: yes
+  gather_facts: false
   become: true
+  pre_tasks:
+    - name: Wait for connection and gather facts
+      ansible.builtin.setup:
+      retries: 10
+      delay: 5
+      register: result
+      until: result is success
   tasks:
     - name: Transfer service.py to remote server
       ansible.builtin.copy:
