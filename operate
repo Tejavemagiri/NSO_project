@@ -105,7 +105,12 @@ monitor_file() {
         else
             echo "File $filename not found. Waiting for it to be created..."
         fi
-        sleep 1
+        current_instances=$(get_current_instances $3)
+        if [ "$current_instances" != "$last_number" ]; then
+            echo "Mismatch detected! Current instances: $current_instances, Expected: $last_number"
+            operation "$last_number" "$3" "$2" "$3" "$4" "$5" "$6"
+        fi
+        sleep 20
     done
 }
 
