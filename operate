@@ -79,17 +79,15 @@ operation() {
         echo "No change in VM count"
     fi
 }
-# Function to remove IPs not present in the live list
+
 remove_stale_ips() {
-    local ip_storage_path="../storage/ips"
+    local ip_storage_path="./storage/ips"
     
-    # Get live IPs using the new command
+    
     local live_ips=$(openstack server list -f json | jq -r '[.[].Networks | to_entries[] | .value[] | select(. | test("^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}$"))] | .[]')
     
-    echo "Live IPs:"
-    echo "$live_ips"
     
-    # Read stored IPs into an array
+    
     mapfile -t stored_ips < "$ip_storage_path"
     
     for stored_ip in "${stored_ips[@]}"; do
@@ -130,7 +128,7 @@ monitor_file() {
             echo "Mismatch detected! Current instances: $current_instances, Expected: $last_number"
             operation "$last_number" "$3" "$2" "$3" "$4" "$5" "$6"
         fi
-        sleep 20
+        sleep 30
     done
 }
 
